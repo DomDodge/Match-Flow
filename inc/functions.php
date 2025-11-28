@@ -312,7 +312,7 @@ function updateGoals($user, $week, $year, $type, $target) {
     }
 }
 
-function updateStatus($pid, $status, $date, $note) {
+function updateStatus($user, $pid, $status) {
     $pdo = getDB('users');
     $stmt = $pdo->prepare("SELECT * FROM people WHERE id = ?");
     $stmt->execute([$pid]);
@@ -330,9 +330,18 @@ function updateStatus($pid, $status, $date, $note) {
     ");
     $update->execute([$status, $row['id']]);
 
-    if (!empty($date) && !empty($note)) {
-        addNote($pid, $date, $note);
+    if($status == "Conversation") {
+        incrementGoalProgress($user, date('W'), date('o'), "conversation", 1);
     }
+    else if($status == "Connection") {
+        incrementGoalProgress($user, date('W'), date('o'), "connections", 1);
+    }
+    else if($status == "Friendship") {
+        incrementGoalProgress($user, date('W'), date('o'), "friendships", 1);
+    }
+    else if($status == "Dating") {
+        incrementGoalProgress($user, date('W'), date('o'), "dates", 1);
+    } 
 
     return true;
 }

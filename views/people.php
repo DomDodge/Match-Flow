@@ -13,6 +13,7 @@
         </div>
     </div>
 
+    <!-- New Person -->
     <div class="newPersonModal" ng-if="modal">
         <h3>Add Person</h3>
 
@@ -32,6 +33,7 @@
         <button ng-click="toggleModal()">Close</button>
     </div>
 
+    <!-- Change Status -->
     <div class="changeStatusModal" ng-if="statusMenu">
         <h3>{{currentPerson.name}}</h3>
 
@@ -44,16 +46,17 @@
 
         <div class="note">
             <h4>Date</h4>
-            <input ng-model="statusUpdate.date" type="date">
+            <input ng-model="newNote.date" type="date">
             <h4>Note</h4>
-            <textarea ng-model="statusUpdate.note"></textarea>
+            <textarea ng-model="newNote.note"></textarea>
             <button ng-click="addNote(currentPerson.id)">Add Note</button>
         </div>
 
-        <button ng-click="updateStatus()">Submit</button>
+        <button ng-click="updateStatus(currentPerson.id)">Submit</button>
         <button ng-click="changeStatus()">Close</button>
     </div>
 
+    <!-- View Person -->
     <div class="viewPersonModal" ng-if="viewing">
         <div class="left">
             <h2>{{currentPerson.name}}</h2>
@@ -88,7 +91,7 @@
         $scope.viewing = false;
         $scope.currentPerson = {};
         $scope.newNote = {};
-        $scope.updateStatus = {};
+        $scope.statusUpdate = {};
         $scope.people = <?php echo json_encode(getPeople($_SESSION['username'])); ?>;
         $scope.notes = <?php echo json_encode(getPeopleAndNotes($_SESSION['username'])); ?>;
 
@@ -127,8 +130,8 @@
             });
         }
 
-        $scope.updateStatus = function() {
-            $scope.statusUpdate.id = $scope.currentPerson.id;
+        $scope.updateStatus = function(pid) {
+            $scope.statusUpdate.id = pid;
 
             $http.post("/inc/update_status.php", $scope.statusUpdate)
             .then(function(response) {
@@ -144,15 +147,17 @@
         }
 
         $scope.changeStatus = function(person) {
-            if(!$scope.statusMenu) {
+            if (!$scope.statusMenu) {
                 $scope.currentPerson = person;
+                $scope.statusUpdate = {};
                 $scope.statusMenu = true;
-            }
-            else {
+            } else {
                 $scope.statusMenu = false;
                 $scope.currentPerson = {};
+                $scope.statusUpdate = {};
             }
         }
+
 
         $scope.setView = function(person) {
             $scope.viewing = true;

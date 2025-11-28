@@ -104,7 +104,7 @@ i {
     justify-content: flex-start;
 }
 
-.newPersonModal, .viewPersonModal .changeStatusModal {
+.newPersonModal, .viewPersonModal, .changeStatusModal {
     background-color: white;
     display: flex;
     flex-direction: column;

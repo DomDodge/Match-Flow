@@ -19,4 +19,4 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
-updateStatus(e($data['id']), e($data['status']), e($data['date']), e($data['note']));
+updateStatus($_SESSION['username'], e($data['id']), e($data['status']));
