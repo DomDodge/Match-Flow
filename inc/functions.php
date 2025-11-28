@@ -12,7 +12,9 @@ function getDB($file) {
     return $pdo;
 }
 
+// -------------------------------------------------------------------------------------------------------
 // Create
+// -------------------------------------------------------------------------------------------------------
 
 function addGoals($user, $goal, $type) {
     $user_id = getUserId($user);
@@ -86,8 +88,9 @@ function addNote($pid, $date, $note) {
     ]);
 }
 
-
+// -------------------------------------------------------------------------------------------------------
 // Retrieve
+// -------------------------------------------------------------------------------------------------------
 
 function getUserId($user) {
     $pdo = getDB('users');
@@ -106,6 +109,16 @@ function getFirstName($user) {
     $stmt->execute([$user]);
     $fname = $stmt->fetch(PDO::FETCH_ASSOC);
     return $fname['first_name'];
+}
+
+function getNotes($pid) {
+    $pdo = getDB('users');
+
+    $stmt = $pdo->prepare("SELECT * FROM notes WHERE person_id = ? ORDER BY note_date DESC");
+    $stmt->execute([$pid]);
+    $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    return $notes;
 }
 
 function getLastName($user) {
@@ -137,6 +150,16 @@ function getPeopleWithStatus($user, $status) {
     $people = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     return $people;
+}
+
+function getPeopleAndNotes($user) {
+    $people = getPeople($user);
+    $notes = [];
+    for ($i = 0; $i < count($people); $i++) {
+        $note = getNotes($people[$i]['id']);
+        $notes[(string) $people[$i]['id']] = $note;
+    }
+    return $notes;
 }
 
 function readGoals($user, $week, $year, $type) {
@@ -224,7 +247,9 @@ function getMonthGoals($user, $type, $field) {
     return [$res1, $res2, $res3, $res4];
 }
 
+// -------------------------------------------------------------------------------------------------------
 // Update
+// -------------------------------------------------------------------------------------------------------
 
 function incrementGoalProgress($user, $week, $year, $type, $amount = 1) {
     $user_id = getUserId($user);
@@ -286,3 +311,32 @@ function updateGoals($user, $week, $year, $type, $target) {
         $insert->execute([$user_id, $week, $year, $type, $target, 0]);
     }
 }
+
+function updateStatus($pid, $status, $date, $note) {
+    $pdo = getDB('users');
+    $stmt = $pdo->prepare("SELECT * FROM people WHERE id = ?");
+    $stmt->execute([$pid]);
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$row) {
+        return false;
+    }
+
+    $update = $pdo->prepare("
+        UPDATE people
+        SET status = ?
+        WHERE id = ?
+    ");
+    $update->execute([$status, $row['id']]);
+
+    if (!empty($date) && !empty($note)) {
+        addNote($pid, $date, $note);
+    }
+
+    return true;
+}
+
+// -------------------------------------------------------------------------------------------------------
+// Delete
+// -------------------------------------------------------------------------------------------------------

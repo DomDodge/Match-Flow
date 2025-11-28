@@ -104,7 +104,7 @@ i {
     justify-content: flex-start;
 }
 
-.newPersonModal, .viewPersonModal {
+.newPersonModal, .viewPersonModal .changeStatusModal {
     background-color: white;
     display: flex;
     flex-direction: column;
@@ -150,7 +150,7 @@ i {
     align-items: center;
 }
 .menuItem:hover {
-    background-color: #4A102A;;
+    background-color: #4A102A;
 }
 #activeItem {
     background-color: white;
@@ -304,4 +304,91 @@ i {
     height: 50px;
     text-align: center;
     font-size: 20px;
+}
+
+.viewPersonModal {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+}
+.viewPersonModal * {
+    width: 45%;
+}
+
+.note {
+    background-color: white;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+    padding: 20px;
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    border-radius: 10px;
+    margin-bottom: 5px;
+}
+.note * {
+    margin: 0;
+}
+
+#newBtn {
+    background-image: linear-gradient(to top right, #E4004B, #ED775A);
+    color: white;
+    width: 80px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: 0.2s;
+}
+#newBtn:hover {
+    background-image: linear-gradient(to top right, #4A102A, #E4004B);
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.status {
+    width: 140px;
+    height: 40px;
+    font-weight: bold;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#Conversation {
+    background-color: rgb(75, 192, 192);
+    transition: 0.2s;
+}
+#Conversation:hover {
+    background-color: rgb(20, 156, 156);
+    transition: 0.2s;
+    cursor: pointer;
+}
+#Connection {
+    background-color: rgb(255, 75, 192);
+    transition: 0.2s;
+}
+#Connection:hover {
+    background-color: rgb(219, 36, 155);
+    transition: 0.2s;
+    cursor: pointer;
+}
+#Friendship {
+    background-color: rgba(247, 167, 62, 1);
+    transition: 0.2s;
+}
+#Friendship:hover {
+    background-color: rgb(199, 130, 39);
+    transition: 0.2s;
+    cursor: pointer;
+}
+#Dating {
+    background-color: rgba(130, 255, 119, 1);
+    transition: 0.2s;
+}
+#Dating:hover {
+    background-color: rgb(97, 201, 87);
+    transition: 0.2s;
+    cursor: pointer;
 }

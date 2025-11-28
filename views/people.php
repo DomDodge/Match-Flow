@@ -1,14 +1,14 @@
 <div class="internalHeader" ng-app="peopleApp" ng-controller="PeopleController">
     <h2>People</h2>
-    <div class="peopleHolder" ng-show="!modal && !viewing">
+    <div class="peopleHolder" ng-show="!modal && !viewing && !statusMenu">
         <div class="person">
-            <h4 ng-click='toggleModal()'>Add new</h4>
+            <h4 id="newBtn" ng-click='toggleModal()'>New</h4>
         </div>
         <div class="person" ng-repeat="p in people">
             <i class="fa-solid fa-eye" ng-click="setView(p)"></i>    
             <h4>{{ p.name }}</h4> 
-            <h4>status: {{ p.status }}</h4>
-            <h4>last interaction: {{ p.last_interation }} </h4>
+            <div class="status" id="{{p.status}}" ng-click="changeStatus(p)">{{ p.status }}</div>
+            <h4>last interaction: {{ getLastInteract(p.id) | date:'mediumDate' }} </h4>
             <h4>next interaction: {{ p.next_interaction }}</h4>
         </div>
     </div>
@@ -32,13 +32,50 @@
         <button ng-click="toggleModal()">Close</button>
     </div>
 
-    <div class="viewPersonModal" ng-if="viewing">
+    <div class="changeStatusModal" ng-if="statusMenu">
         <h3>{{currentPerson.name}}</h3>
-        <h4>{{currentPerson.contact_info}}</h4>
-        <h4>{{currentPerson.status}}</h4>
-        <h4>{{currentPerson.notes}}</h4>
 
-        <button ng-click="closeView()">Close</button>
+        <select ng-model="statusUpdate.status">
+            <option value="Conversation">Conversation</option>
+            <option value="Connection">Connection</option>
+            <option value="Friendship">Friendship</option>
+            <option value="Dating">Dating</option>
+        </select>
+
+        <div class="note">
+            <h4>Date</h4>
+            <input ng-model="statusUpdate.date" type="date">
+            <h4>Note</h4>
+            <textarea ng-model="statusUpdate.note"></textarea>
+            <button ng-click="addNote(currentPerson.id)">Add Note</button>
+        </div>
+
+        <button ng-click="updateStatus()">Submit</button>
+        <button ng-click="changeStatus()">Close</button>
+    </div>
+
+    <div class="viewPersonModal" ng-if="viewing">
+        <div class="left">
+            <h2>{{currentPerson.name}}</h2>
+            <h3>{{currentPerson.contact_info}}</h3>
+            <h3 class="status" id="{{currentPerson.status}}">{{currentPerson.status}}</h3>
+            <button ng-click="closeView()">Close</button>
+        </div>
+        <div class="right">
+            <h3>Notes:</h3>
+            <div class="note">
+                <h4>Date</h4>
+                <input ng-model="newNote.date" type="date">
+                <h4>Note</h4>
+                <textarea ng-model="newNote.note"></textarea>
+                <button ng-click="addNote(currentPerson.id)">Add Note</button>
+            </div>
+            <div class="note" ng-repeat="n in notes[currentPerson.id]">
+                <h4>{{n.note_date | date:'mediumDate'}}</h4>
+                <p>{{n.note}}</p>
+            </div>
+
+        </div>
     </div>
 </div>
 
@@ -47,9 +84,13 @@
 
     app.controller("PeopleController", function($scope, $http) {
         $scope.modal = false;
+        $scope.statusMenu = false;
         $scope.viewing = false;
         $scope.currentPerson = {};
+        $scope.newNote = {};
+        $scope.updateStatus = {};
         $scope.people = <?php echo json_encode(getPeople($_SESSION['username'])); ?>;
+        $scope.notes = <?php echo json_encode(getPeopleAndNotes($_SESSION['username'])); ?>;
 
         $scope.toggleModal = function() {
             $scope.modal = !$scope.modal;
@@ -72,6 +113,47 @@
             $scope.modal = false;
         }
 
+        $scope.addNote = function(pid) {
+            $scope.newNote.id = pid;
+
+            $http.post("/inc/add_note.php", $scope.newNote)
+            .then(function(response) {
+                console.log("SUCCESS: " + JSON.stringify(response.data));
+
+                $scope.newNote = {};
+            })
+            .catch(function(err) {
+                console.log("ERROR: " + JSON.stringify(err));
+            });
+        }
+
+        $scope.updateStatus = function() {
+            $scope.statusUpdate.id = $scope.currentPerson.id;
+
+            $http.post("/inc/update_status.php", $scope.statusUpdate)
+            .then(function(response) {
+                console.log("SUCCESS: " + JSON.stringify(response.data));
+
+                $scope.statusUpdate = {};
+                $scope.currentPerson = {};
+                $scope.statusMenu = false;
+            })
+            .catch(function(err) {
+                console.log("ERROR: " + JSON.stringify(err));
+            });
+        }
+
+        $scope.changeStatus = function(person) {
+            if(!$scope.statusMenu) {
+                $scope.currentPerson = person;
+                $scope.statusMenu = true;
+            }
+            else {
+                $scope.statusMenu = false;
+                $scope.currentPerson = {};
+            }
+        }
+
         $scope.setView = function(person) {
             $scope.viewing = true;
             $scope.currentPerson = person;
@@ -80,6 +162,16 @@
         $scope.closeView = function() {
             $scope.viewing = false;
             $scope.currentPerson = {};
+        }
+
+        $scope.getLastInteract = function(pid) {
+            const list = $scope.notes[pid];
+
+            if (list && list.length > 0 && list[0].note_date) {
+                return list[0].note_date;
+            }
+
+            return "None";
         }
     });
 </script>

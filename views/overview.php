@@ -58,19 +58,19 @@
 <div class="goalAdder">
     <div class="goal">
         <h4>Conversations</h4>
-        <input class="goal-int" id="convo" type="number" min="0" max="10">
+        <input class="goal-int" id="convo" type="number" value="<?php echo getGoalCount($_SESSION['username'], date('W'), date('o'), 'conversations', 'target_count'); ?>" min="0" max="10">
     </div>
     <div class="goal">
         <h4>Connections</h4>
-        <input class="goal-int" id="conn" type="number" min="0" max="10">
+        <input class="goal-int" id="conn" type="number" value="<?php echo getGoalCount($_SESSION['username'], date('W'), date('o'), 'connections', 'target_count'); ?>" min="0" max="10">
     </div>
     <div class="goal">
         <h4>Friendships</h4>
-        <input class="goal-int" id="friend" type="number" min="0" max="10">
+        <input class="goal-int" id="friend" type="number" value="<?php echo getGoalCount($_SESSION['username'], date('W'), date('o'), 'friendships', 'target_count'); ?>" min="0" max="10">
     </div>
     <div class="goal">
         <h4>Dates</h4>
-        <input class="goal-int" id="dates" type="number" min="0" max="10">
+        <input class="goal-int" id="dates" type="number" value="<?php echo getGoalCount($_SESSION['username'], date('W'), date('o'), 'dates', 'target_count'); ?>" min="0" max="10">
     </div>
     <button id="login" onclick="updateGoals()">
         GOALS
@@ -79,6 +79,8 @@
 
 <!-- Goal Logic -->
 <script>
+
+
     function updateGoals() {
         let conversations = Number(document.getElementById('convo').value || 0);
         let connections   = Number(document.getElementById('conn').value || 0);
