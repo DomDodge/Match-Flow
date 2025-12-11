@@ -27,6 +27,10 @@
                     <i class="fa-solid fa-person"></i> <h3>People</h3>
                 </div>
 
+                <div class="menuItem" data-page="activities" onclick="changePage('activities')">
+                    <i class="fa-solid fa-chart-line"></i> <h3>Activities</h3>
+                </div>
+
                 <div class="menuItem" data-page="conversations" onclick="changePage('conversations')">
                     <i class="fa-solid fa-comment"></i> <h3>Conversations</h3>
                 </div>
@@ -43,12 +47,12 @@
                     <i class="fa-solid fa-martini-glass"></i> <h3>Dates</h3>
                 </div>
 
-                <div class="menuItem" data-page="account" onclick="changePage('account')">
-                    <i class="fa-solid fa-user"></i> <h3>Account</h3>
+                <div class="menuItem" data-page="dropped" onclick="changePage('dropped')">
+                    <i class="fa-solid fa-truck-fast"></i> <h3>Dropped</h3>
                 </div>
 
-                <div class="menuItem" data-page="settings" onclick="changePage('settings')">
-                    <i class="fa-solid fa-gears"></i> <h3>Settings</h3>
+                <div class="menuItem" data-page="account" onclick="changePage('account')">
+                    <i class="fa-solid fa-user"></i> <h3>Account</h3>
                 </div>
 
                 <div class="menuItem" id="logout" onclick="logout()">

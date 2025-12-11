@@ -116,6 +116,8 @@ i {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
+
+
 .person {
     width: 100%;
     height: 60px;
@@ -330,6 +332,16 @@ i {
     margin: 0;
 }
 
+.searchBar {
+    width: 300px;
+    height: 30px;
+    margin-top: 25px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 #newBtn {
     background-image: linear-gradient(to top right, #E4004B, #ED775A);
     color: white;
@@ -389,6 +401,17 @@ i {
 }
 #Dating:hover {
     background-color: rgb(97, 201, 87);
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+#Dropped {
+    background-color: rgb(112, 112, 112);
+    transition: 0.2s;
+    color: white;
+}
+#Dropped:hover {
+    background-color: rgb(87, 87, 87);
     transition: 0.2s;
     cursor: pointer;
 }

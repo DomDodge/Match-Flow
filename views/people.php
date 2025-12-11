@@ -1,10 +1,11 @@
 <div class="internalHeader" ng-app="peopleApp" ng-controller="PeopleController">
     <h2>People</h2>
     <div class="peopleHolder" ng-show="!modal && !viewing && !statusMenu">
-        <div class="person">
+        <div class="person" style="justify-content: flex-start; gap: 20px;">
             <h4 id="newBtn" ng-click='toggleModal()'>New</h4>
+            <input class="searchBar" placeholder="Search..." ng-model="searchText">
         </div>
-        <div class="person" ng-repeat="p in people">
+        <div class="person" ng-repeat="p in people | filter:searchByName">
             <i class="fa-solid fa-eye" ng-click="setView(p)"></i>    
             <h4>{{ p.name }}</h4> 
             <div class="status" id="{{p.status}}" ng-click="changeStatus(p)">{{ p.status }}</div>
@@ -22,7 +23,7 @@
         <input type="date" ng-model="newPerson.date" required>
         <textarea ng-model="newPerson.notes" placeholder="Notes" required></textarea>
 
-        <select ng-model="newPerson.status">
+        <select ng-model="newPerson.status" value="Conversation">
             <option value="Conversation">Conversation</option>
             <option value="Connection">Connection</option>
             <option value="Friendship">Friendship</option>
@@ -37,11 +38,12 @@
     <div class="changeStatusModal" ng-if="statusMenu">
         <h3>{{currentPerson.name}}</h3>
 
-        <select ng-model="statusUpdate.status">
+        <select ng-model="statusUpdate.status" placeholder="currentPerson.status">
             <option value="Conversation">Conversation</option>
             <option value="Connection">Connection</option>
             <option value="Friendship">Friendship</option>
             <option value="Dating">Dating</option>
+            <option value="Dropped">Dropped</option>
         </select>
 
         <div class="note">
@@ -94,6 +96,7 @@
         $scope.statusUpdate = {};
         $scope.people = <?php echo json_encode(getPeople($_SESSION['username'])); ?>;
         $scope.notes = <?php echo json_encode(getPeopleAndNotes($_SESSION['username'])); ?>;
+        $scope.searchText = "";
 
         $scope.toggleModal = function() {
             $scope.modal = !$scope.modal;
@@ -102,6 +105,11 @@
                 $scope.newPerson = {};
             }
         }
+
+        $scope.searchByName = function(person) {
+            if (!$scope.searchText) return true;
+            return person.name.toLowerCase().includes($scope.searchText.toLowerCase());
+        };
 
         $scope.insertUser = function() {
 

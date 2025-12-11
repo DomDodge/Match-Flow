@@ -1,5 +1,5 @@
 <div class="internalHeader" ng-app="peopleApp" ng-controller="PeopleController">
-    <h2>Conversations</h2>
+    <h2>Dropped</h2>
    <div class="peopleHolder" ng-show="!modal && !viewing && !statusMenu">
         <div class="person">
             <h4 id="newBtn" ng-click='toggleModal()'>New</h4>
@@ -92,7 +92,7 @@
         $scope.currentPerson = {};
         $scope.newNote = {};
         $scope.statusUpdate = {};
-        $scope.people = <?php echo json_encode(getPeopleWithStatus($_SESSION['username'], 'Conversation')); ?>;
+        $scope.people = <?php echo json_encode(getPeopleWithStatus($_SESSION['username'], 'Dropped')); ?>;
         $scope.notes = <?php echo json_encode(getPeopleAndNotes($_SESSION['username'])); ?>;
 
         $scope.toggleModal = function() {

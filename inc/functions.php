@@ -134,7 +134,7 @@ function getPeople($user) {
     $id = getUserId($user);
     $pdo = getDB('users');
 
-    $stmt = $pdo->prepare("SELECT * FROM people WHERE user_id = ?");
+    $stmt = $pdo->prepare("SELECT * FROM people WHERE user_id = ? AND status <> 'Dropped'");
     $stmt->execute([$id]);
     $people = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
