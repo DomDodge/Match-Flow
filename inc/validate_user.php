@@ -1,24 +1,14 @@
 <?php
+
+session_start();
+require_once __DIR__ . "/functions.php";
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // Path to your SQLite database
-    $db_path = __DIR__ . "/../db/users.db";
-
     try {
-        // Connect (creates file automatically if missing)
-        $pdo = new PDO("sqlite:" . $db_path);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        // Make sure the users table exists
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
-            );
-        ");
+        $pdo = getDB();
 
         if ($_POST['action'] === 'login') {
             $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
@@ -26,14 +16,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user && password_verify($password, $user['password'])) {
-                session_start(); 
+                 
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['page'] = "overview";
                 $_SESSION['username'] = $user['username']; 
                 header("Location: ../index.php");
                 exit();
             } else {
-                session_start();
+                
                 $_SESSION['error'] = "Invalid username or password.";
                 header("Location: ../login.php");
             }
@@ -47,12 +37,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($existing) {
-                session_start();
+                
                 $_SESSION['error'] = "Username is already taken";
                 header("Location: ../login.php");
             } 
             else if(strlen($password) < 6) {
-                session_start();
+                
                 $_SESSION['error'] = "Password is too weak";
                 header("Location: ../login.php");
             }
@@ -63,10 +53,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
                 $newId = $pdo->lastInsertId();
 
-                session_start();
+                
                 $_SESSION['user_id'] = (int) $newId;
                 $_SESSION['page'] = "overview";
-                $_SESSION['username'] = $user['username'];
+                $_SESSION['username'] = $username;
                 header("Location: ../index.php");
                 exit();
             }

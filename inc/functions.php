@@ -1,14 +1,36 @@
 <?php
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv->load();
+
 // Prevents Cross SIde Scripting
 function e($value) {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
-function getDB($file) {
-    $db_path = __DIR__ . "/../db/" . $file . ".db";
-    $pdo = new PDO("sqlite:" . $db_path);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+// Key to the project
+function getDB() {
+    $host = $_ENV['DB_HOST'];
+    $db   = $_ENV['DB_NAME'];
+    $user = $_ENV['DB_USER'];
+    $pass = $_ENV['DB_PASS'];
+    $charset = $_ENV['DB_CHARSET'];
+
+    $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+
+    $options = [
+        PDO::ATTR_ERRMODE             => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE  => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES    => false,
+    ];
+    $pdo = new PDO($dsn, $user, $pass, $options);
+    $pdo->exec("SET FOREIGN_KEY_CHECKS=1");
     return $pdo;
 }
 
@@ -18,9 +40,9 @@ function getDB($file) {
 
 function addGoals($user, $goal, $type) {
     $user_id = getUserId($user);
-    $pdo = getDB('users');
+    $pdo = getDB();
 
-    $stmt = $pdo->prepare("INSERT INTO goals (user_id, week, year, goal_type, target_count, progress_count)
+    $stmt = $pdo->prepare("INSERT INTO goals (user_id, goal_week, goal_year, goal_type, target_count, progress_count)
         VALUES (?, ?, ?, ?, ?, ?)
     ");
 
@@ -31,7 +53,7 @@ function addGoals($user, $goal, $type) {
 
 function addPerson($user, $name, $contact, $date, $notes, $status) {
     $user_id = getUserId($user);
-    $pdo = getDB('users');
+    $pdo = getDB();
 
     if (!$user_id) {
         throw new Exception("User not found");
@@ -74,7 +96,7 @@ function addPerson($user, $name, $contact, $date, $notes, $status) {
 }
 
 function addNote($pid, $date, $note) {
-    $pdo = getDB('users');
+    $pdo = getDB();
 
     $stmt = $pdo->prepare("
         INSERT INTO notes (person_id, note, note_date)
@@ -93,7 +115,7 @@ function addNote($pid, $date, $note) {
 // -------------------------------------------------------------------------------------------------------
 
 function getUserId($user) {
-    $pdo = getDB('users');
+    $pdo = getDB();
 
     $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
     $stmt->execute([$user]);
@@ -103,7 +125,7 @@ function getUserId($user) {
 }
 
 function getFirstName($user) {
-    $pdo = getDB('users');
+    $pdo = getDB();
 
     $stmt = $pdo->prepare("SELECT first_name FROM users WHERE username = ?");
     $stmt->execute([$user]);
@@ -112,7 +134,7 @@ function getFirstName($user) {
 }
 
 function getNotes($pid) {
-    $pdo = getDB('users');
+    $pdo = getDB();
 
     $stmt = $pdo->prepare("SELECT * FROM notes WHERE person_id = ? ORDER BY note_date DESC");
     $stmt->execute([$pid]);
@@ -122,7 +144,7 @@ function getNotes($pid) {
 }
 
 function getLastName($user) {
-    $pdo = getDB('users');
+    $pdo = getDB();
 
     $stmt = $pdo->prepare("SELECT last_name FROM users WHERE username = ?");
     $stmt->execute([$user]);
@@ -132,7 +154,7 @@ function getLastName($user) {
 
 function getPeople($user) {
     $id = getUserId($user);
-    $pdo = getDB('users');
+    $pdo = getDB();
 
     $stmt = $pdo->prepare("SELECT * FROM people WHERE user_id = ? AND status <> 'Dropped'");
     $stmt->execute([$id]);
@@ -143,7 +165,7 @@ function getPeople($user) {
 
 function getPeopleWithStatus($user, $status) {
     $id = getUserId($user);
-    $pdo = getDB('users');
+    $pdo = getDB();
 
     $stmt = $pdo->prepare("SELECT * FROM people WHERE user_id = ? AND status = ?");
     $stmt->execute([$id, $status]);
@@ -164,9 +186,9 @@ function getPeopleAndNotes($user) {
 
 function readGoals($user, $week, $year, $type) {
     $user_id = getUserId($user);
-    $pdo = getDB('users');
+    $pdo = getDB();
 
-    $stmt = $pdo->prepare("SELECT * FROM goals WHERE user_id = ? AND week = ? AND year = ? AND goal_type = ?");
+    $stmt = $pdo->prepare("SELECT * FROM goals WHERE user_id = ? AND goal_week = ? AND goal_year = ? AND goal_type = ?");
     $stmt->execute([$user_id, $week, $year, $type]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
@@ -253,12 +275,12 @@ function getMonthGoals($user, $type, $field) {
 
 function incrementGoalProgress($user, $week, $year, $type, $amount = 1) {
     $user_id = getUserId($user);
-    $pdo = getDB('users');
+    $pdo = getDB();
 
     $stmt = $pdo->prepare("
         SELECT id, progress_count 
         FROM goals 
-        WHERE user_id = ? AND week = ? AND year = ? AND goal_type = ?
+        WHERE user_id = ? AND goal_week = ? AND goal_year = ? AND goal_type = ?
     ");
     $stmt->execute([$user_id, $week, $year, $type]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -275,7 +297,7 @@ function incrementGoalProgress($user, $week, $year, $type, $amount = 1) {
 
     } else {
         $insert = $pdo->prepare("
-            INSERT INTO goals (user_id, week, year, goal_type, target_count, progress_count)
+            INSERT INTO goals (user_id, goal_week, goal_year, goal_type, target_count, progress_count)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
         $insert->execute([$user_id, $week, $year, $type, 0, $amount]);
@@ -284,12 +306,12 @@ function incrementGoalProgress($user, $week, $year, $type, $amount = 1) {
 
 function updateGoals($user, $week, $year, $type, $target) {
     $user_id = getUserId($user);
-    $pdo = getDB('users');
+    $pdo = getDB();
 
     $stmt = $pdo->prepare("
         SELECT id, target_count 
         FROM goals 
-        WHERE user_id = ? AND week = ? AND year = ? AND goal_type = ?
+        WHERE user_id = ? AND goal_week = ? AND goal_year = ? AND goal_type = ?
     ");
     $stmt->execute([$user_id, $week, $year, $type]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -305,7 +327,7 @@ function updateGoals($user, $week, $year, $type, $target) {
     } else {
 
         $insert = $pdo->prepare("
-            INSERT INTO goals (user_id, week, year, goal_type, target_count, progress_count)
+            INSERT INTO goals (user_id, goal_week, goal_year, goal_type, target_count, progress_count)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
         $insert->execute([$user_id, $week, $year, $type, $target, 0]);
@@ -313,7 +335,7 @@ function updateGoals($user, $week, $year, $type, $target) {
 }
 
 function updateStatus($user, $pid, $status) {
-    $pdo = getDB('users');
+    $pdo = getDB();
     $stmt = $pdo->prepare("SELECT * FROM people WHERE id = ?");
     $stmt->execute([$pid]);
 
@@ -331,7 +353,7 @@ function updateStatus($user, $pid, $status) {
     $update->execute([$status, $row['id']]);
 
     if($status == "Conversation") {
-        incrementGoalProgress($user, date('W'), date('o'), "conversation", 1);
+        incrementGoalProgress($user, date('W'), date('o'), "conversations", 1);
     }
     else if($status == "Connection") {
         incrementGoalProgress($user, date('W'), date('o'), "connections", 1);
