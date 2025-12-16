@@ -19,4 +19,9 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
-updateStatus($_SESSION['username'], e($data['id']), e($data['status']), e($data['date']), e($data['note']));
+if($data['action'] === 'delete') {
+    deleteNote(e($data['pid']), e($data['note']));
+}
+else if($data['action'] === 'update') {
+    changeNote(e($data['pid']), e($data['note']), e($data['newNote']), e($data['date']));
+}

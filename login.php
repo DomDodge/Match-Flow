@@ -5,7 +5,7 @@
         <link rel="stylesheet" href="style/style.css">
     </head>
     <body>
-        <h1>Match Flow</h1>
+        <h1 style="color: white;">Match Flow</h1>
         <?php
             session_start();
 

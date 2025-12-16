@@ -71,7 +71,7 @@ function addPerson($user, $name, $contact, $date, $notes, $status) {
         $status
     ]);
 
-    addNote($pdo->lastInsertId(), $date, $notes);
+    addNote($pdo->lastInsertId(), $date, $notes, $pdo);
 
     $type = '';
     switch ($status) {
@@ -95,8 +95,10 @@ function addPerson($user, $name, $contact, $date, $notes, $status) {
     return;
 }
 
-function addNote($pid, $date, $note) {
-    $pdo = getDB();
+function addNote($pid, $date, $note, $pdo = null) {
+    if (!$pdo) $pdo = getDB();
+
+    $date = date('Y-m-d', strtotime($date));
 
     $stmt = $pdo->prepare("
         INSERT INTO notes (person_id, note, note_date)
@@ -106,6 +108,23 @@ function addNote($pid, $date, $note) {
     $stmt->execute([
         $pid,
         $note,
+        $date
+    ]);
+}
+
+function createActivity($pid, $user, $title, $desc, $date) {
+    $date = date('Y-m-d', strtotime($date));
+    $pdo = getDB();
+
+    $stmt = $pdo->prepare("
+        INSERT INTO activities (person_id, user_id, title, description, event_date) VALUES(?, ?, ?, ?, ?, ?)
+    ");
+
+    $stpt->execute([
+        $pid,
+        getUserId($user),
+        $title,
+        $desc,
         $date
     ]);
 }
@@ -122,6 +141,21 @@ function getUserId($user) {
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
     return $row['id'] ?? null;  
+}
+
+function getNoteID($pid, $note) {
+    $pdo = getDB();
+
+    $stmt = $pdo->prepare("   
+        SELECT id FROM notes WHERE person_id = ? AND note = ? ORDER BY id DESC LIMIT 1
+    ");
+
+    $stmt->execute([
+        $pid, $note
+    ]);
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ? $row['id'] : null;
 }
 
 function getFirstName($user) {
@@ -334,7 +368,7 @@ function updateGoals($user, $week, $year, $type, $target) {
     }
 }
 
-function updateStatus($user, $pid, $status) {
+function updateStatus($user, $pid, $status, $date, $note) {
     $pdo = getDB();
     $stmt = $pdo->prepare("SELECT * FROM people WHERE id = ?");
     $stmt->execute([$pid]);
@@ -365,9 +399,47 @@ function updateStatus($user, $pid, $status) {
         incrementGoalProgress($user, date('W'), date('o'), "dates", 1);
     } 
 
+    if(!empty($note) && !empty($date)) {
+        addNote($pid, $date, $note, $pdo);
+    }
+
     return true;
+}
+
+function changeNote($person, $old_note, $new_note, $new_date) {
+    $date = date('Y-m-d', strtotime($new_date));
+
+    $pdo = getDB();
+    $noteID = getNoteId($person, $old_note);
+
+    if(!$noteID) return false;
+
+    $stmt = $pdo->prepare("SELECT * FROM notes WHERE id = ?");
+    $stmt->execute([$noteID]);
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$row) return false;
+
+    $update = $pdo->prepare("
+        UPDATE notes
+        SET note= ?, note_date = ?
+        WHERE id = ?
+    ");
+    $update->execute([$new_note, $date, $row['id']]);
+
 }
 
 // -------------------------------------------------------------------------------------------------------
 // Delete
 // -------------------------------------------------------------------------------------------------------
+
+function deleteNote($pid, $note) {
+    $noteId = getNoteID($pid, $note);
+
+    if (!$noteId) return false;
+
+    $pdo = getDB();
+    $stmt = $pdo->prepare("DELETE FROM notes WHERE id = ?");
+    $stmt->execute([$noteId]);
+}

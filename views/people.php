@@ -23,22 +23,24 @@
         <input type="date" ng-model="newPerson.date" required>
         <textarea ng-model="newPerson.notes" placeholder="Notes" required></textarea>
 
-        <select ng-model="newPerson.status" value="Conversation">
+        <select ng-model="newPerson.status">
             <option value="Conversation">Conversation</option>
             <option value="Connection">Connection</option>
             <option value="Friendship">Friendship</option>
             <option value="Dating">Dating</option>
         </select>
 
-        <button ng-click="insertUser()">Submit</button>
-        <button ng-click="toggleModal()">Close</button>
+
+        <div class="submitActions">
+            <button ng-click="toggleModal()">Close</button>
+            <button ng-click="insertUser()">Submit</button>
+        </div>
     </div>
 
     <!-- Change Status -->
     <div class="changeStatusModal" ng-if="statusMenu">
         <h3>{{currentPerson.name}}</h3>
-
-        <select ng-model="statusUpdate.status" placeholder="currentPerson.status">
+        <select ng-model="statusUpdate.status">
             <option value="Conversation">Conversation</option>
             <option value="Connection">Connection</option>
             <option value="Friendship">Friendship</option>
@@ -46,16 +48,15 @@
             <option value="Dropped">Dropped</option>
         </select>
 
-        <div class="note">
-            <h4>Date</h4>
-            <input ng-model="newNote.date" type="date">
-            <h4>Note</h4>
-            <textarea ng-model="newNote.note"></textarea>
-            <button ng-click="addNote(currentPerson.id)">Add Note</button>
-        </div>
+         <h4>Date</h4>
+        <input ng-model="statusUpdate.date" type="date">
+        <h4>Note</h4>
+        <textarea ng-model="statusUpdate.note"></textarea>
 
-        <button ng-click="updateStatus(currentPerson.id)">Submit</button>
-        <button ng-click="changeStatus()">Close</button>
+        <div class="submitActions">
+            <button ng-click="changeStatus()">Close</button>
+            <button ng-click="updateStatus(currentPerson.id)">Submit</button>
+        </div>
     </div>
 
     <!-- View Person -->
@@ -63,7 +64,7 @@
         <div class="left">
             <h2>{{currentPerson.name}}</h2>
             <h3>{{currentPerson.contact_info}}</h3>
-            <h3 class="status" id="{{currentPerson.status}}">{{currentPerson.status}}</h3>
+            <h3 class="status" id="{{currentPerson.status}}" ng-click="changeStatus(currentPerson)">{{currentPerson.status}}</h3>
             <button ng-click="closeView()">Close</button>
         </div>
         <div class="right">
@@ -76,8 +77,21 @@
                 <button ng-click="addNote(currentPerson.id)">Add Note</button>
             </div>
             <div class="note" ng-repeat="n in notes[currentPerson.id]">
-                <h4>{{n.note_date | date:'mediumDate'}}</h4>
-                <p>{{n.note}}</p>
+                <div class="noteHeader">
+                    <h4 ng-if="!n.editing">{{n.note_date | date:'mediumDate'}}</h4>
+                    <input ng-if="n.editing" type="date" ng-model="n.editDate">
+                    <div class="actions">
+                        <i ng-click="startEdit(n)" class="fa-solid fa-pencil"></i>
+                        <i ng-click="changeNote(currentPerson.id, n.note, 'delete')" class="fa-solid fa-trash"></i>
+                    </div>
+                </div>                       
+                <p ng-if="!n.editing">{{n.note}}</p>
+                <textarea ng-if="n.editing" ng-model="n.editNote"></textarea>
+                
+                <div class="submitActions" ng-if="n.editing">
+                    <button ng-click="n.editing = false">CANCEL</button>
+                    <button ng-click="changeNote(currentPerson.id, n.note, 'update', n.editNote, n.editDate)">SAVE</button>
+                </div>
             </div>
 
         </div>
@@ -98,11 +112,18 @@
         $scope.notes = <?php echo json_encode(getPeopleAndNotes($_SESSION['username'])); ?>;
         $scope.searchText = "";
 
+        $scope.startEdit = function(n) {
+            n.editing = true;
+            n.editNote = n.note;
+            n.editDate = n.note_date;
+        };
+
         $scope.toggleModal = function() {
             $scope.modal = !$scope.modal;
 
             if ($scope.modal) {
                 $scope.newPerson = {};
+                $scope.newPerson.status = "Conversation";
             }
         }
 
@@ -148,6 +169,26 @@
                 $scope.statusUpdate = {};
                 $scope.currentPerson = {};
                 $scope.statusMenu = false;
+
+                window.location.reload();
+            })
+            .catch(function(err) {
+                console.log("ERROR: " + JSON.stringify(err));
+            });
+        }
+        $scope.changeNote = function(pid, note, action, newNote, date) {
+            let data;
+
+            if(action === 'delete') {
+                data = {pid: pid, note: note, action: action};
+            } else {
+                data = {pid: pid, note: note, newNote: newNote, date: date, action: action};
+            }
+            
+            $http.post("/inc/change_note.php", data)
+            .then(function(response) {
+                console.log("SUCCESS: " + JSON.stringify(response.data));
+                window.location.reload();
             })
             .catch(function(err) {
                 console.log("ERROR: " + JSON.stringify(err));
@@ -156,9 +197,12 @@
 
         $scope.changeStatus = function(person) {
             if (!$scope.statusMenu) {
+                $scope.viewing = false;
                 $scope.currentPerson = person;
                 $scope.statusUpdate = {};
+                $scope.statusUpdate.status = $scope.currentPerson.status
                 $scope.statusMenu = true;
+                
             } else {
                 $scope.statusMenu = false;
                 $scope.currentPerson = {};
