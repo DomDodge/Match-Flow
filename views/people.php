@@ -10,7 +10,7 @@
             <h4>{{ p.name }}</h4> 
             <div class="status" id="{{p.status}}" ng-click="changeStatus(p)">{{ p.status }}</div>
             <h4>last interaction: {{ getLastInteract(p.id) | date:'mediumDate' }} </h4>
-            <h4>next interaction: {{ p.next_interaction }}</h4>
+            <h4>next interaction: {{ p.next_interaction | date:'mediumDate' }}</h4>
         </div>
     </div>
 
@@ -110,7 +110,22 @@
         $scope.statusUpdate = {};
         $scope.people = <?php echo json_encode(getPeople($_SESSION['username'])); ?>;
         $scope.notes = <?php echo json_encode(getPeopleAndNotes($_SESSION['username'])); ?>;
+        $scope.activities = <?php echo json_encode(getActivities($_SESSION['username'])); ?>;
         $scope.searchText = "";
+
+        $scope.findNextInteraction = function () {
+            $scope.people.forEach(function (p) {
+                p.next_interaction = "Not Set";
+
+                for (let i = $scope.activities.length - 1; i >= 0; i--) {
+                    if ($scope.activities[i].person_id.includes(p.id)) {
+                        p.next_interaction = $scope.activities[i].event_date;
+                    }
+                }
+            });
+        };
+
+        $scope.findNextInteraction();
 
         $scope.startEdit = function(n) {
             n.editing = true;
