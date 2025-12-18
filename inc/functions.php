@@ -112,15 +112,15 @@ function addNote($pid, $date, $note, $pdo = null) {
     ]);
 }
 
-function createActivity($pid, $user, $title, $desc, $date) {
+function saveActivity($user, $title, $desc, $date, $pid) {
     $date = date('Y-m-d', strtotime($date));
     $pdo = getDB();
 
     $stmt = $pdo->prepare("
-        INSERT INTO activities (person_id, user_id, title, description, event_date) VALUES(?, ?, ?, ?, ?, ?)
+        INSERT INTO activities (person_id, user_id, title, description, event_date) VALUES(?, ?, ?, ?, ?)
     ");
 
-    $stpt->execute([
+    $stmt->execute([
         $pid,
         getUserId($user),
         $title,
@@ -195,6 +195,21 @@ function getPeople($user) {
     $people = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     return $people;
+}
+
+function getActivities($user) {
+    $id = getUserId($user);
+    $pdo = getDB();
+
+    $stmt = $pdo->prepare("SELECT * FROM activities WHERE user_id = ? ORDER BY event_date ASC");
+    $stmt->execute([$id]);
+    $activities = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($activities as &$activity) {
+        $activity['person_id'] = json_decode($activity['person_id'], true);
+    }
+
+    return $activities;
 }
 
 function getPeopleWithStatus($user, $status) {
@@ -402,6 +417,8 @@ function updateStatus($user, $pid, $status, $date, $note) {
     if(!empty($note) && !empty($date)) {
         addNote($pid, $date, $note, $pdo);
     }
+    $text = "Changed status to: " . $status;
+    addNote($pid, date('l, F j, Y'), $text, $pdo);
 
     return true;
 }
